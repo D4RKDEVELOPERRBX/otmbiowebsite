@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0a;
+      --surface:   #111111;
+      --surface2:  #1a1a1a;
+      --border:    #252525;
+      --gold:      #D4A843;
+      --gold-l:    #F0C96A;
+      --gold-d:    #B8902F;
+      --text:      #F0EDE8;
+      --muted:     #6B6560;
+      --radius:    12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 56px 20px 72px;
+      overflow-x: hidden;
+    }
+
+    #particle-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(212,168,67,0.07) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .profile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 32px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .profile::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .avatar-ring {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      padding: 2px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-d));
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .avatar-ring:hover {
+      transform: scale(1.06);
+      box-shadow: 0 0 28px rgba(212,168,67,0.35);
+    }
+
+    .avatar-ring img, .avatar-ring .avatar-init {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      display: block;
+      object-fit: cover;
+      background: var(--surface2);
+    }
+
+    .avatar-init {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--gold);
+      background: var(--surface2);
+    }
+
+    .profile-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+
+    .profile-tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.2s;
+      user-select: none;
+    }
+
+    .profile-tag:hover { opacity: 0.75; }
+
+    .copy-icon {
+      font-size: 0.7rem;
+      opacity: 0.6;
+    }
+
+    .divider {
+      width: 40px;
+      height: 1px;
+      background: var(--gold-d);
+      margin: 0 auto 14px;
+      opacity: 0.5;
+    }
+
+    .profile-bio {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 320px;
+      margin: 0 auto;
+      font-weight: 300;
+      min-height: 1.5em;
+    }
+
+    .typing-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--gold);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 0.9s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .visitor-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+    }
+
+    .visitor-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 6px #4ade80;
+      animation: pulse-dot 2s ease infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.8); }
+    }
+
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 16px 2px 4px;
+      opacity: 0.7;
+    }
+
+    .link-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      color: var(--text);
+      text-decoration: none;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      width: 100%;
+      text-align: left;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .link-btn:hover {
+      border-color: rgba(212,168,67,0.45);
+      background: var(--surface2);
+      transform: translateY(-1px);
+    }
+
+    .link-btn:active { transform: translateY(0); }
+
+    .btn-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .btn-text { flex: 1; }
+    .btn-title { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    .btn-sub   { display: block; font-size: 0.75rem; color: var(--muted); margin-top: 2px; font-weight: 400; }
+
+    .btn-arrow {
+      color: var(--muted);
+      font-size: 0.85rem;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .link-btn:hover .btn-arrow { color: var(--gold); transform: translateX(3px); }
+
+    .pay-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: transparent;
+      border: 1px solid rgba(212,168,67,0.3);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      cursor: pointer;
+      width: 100%;
+      color: var(--text);
+      text-align: left;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      font-family: 'Inter', sans-serif;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pay-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(212,168,67,0.06), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .pay-btn:hover { border-color: var(--gold); transform: translateY(-1px); }
+    .pay-btn:hover::before { opacity: 1; }
+    .pay-btn:active { transform: translateY(0); }
+
+    .pay-badge {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(212,168,67,0.1);
+      border: 1px solid rgba(212,168,67,0.2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-top: 3px;
+      display: inline-block;
+    }
+
+    .pay-btn .btn-arrow { color: rgba(212,168,67,0.4); }
+    .pay-btn:hover .btn-arrow { color: var(--gold); transform: translateX(3px); }
+
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 0.8rem;
+      color: var(--text);
+      white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      animation: toastIn 0.3s ease both, toastOut 0.3s ease 2.4s both;
+      pointer-events: none;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to   { opacity: 0; transform: translateY(-8px) scale(0.95); }
+    }
+
+    .footer {
+      margin-top: 40px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: 0.05em;
+      opacity: 0.6;
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .card > * { animation: fadeUp 0.45s ease both; }
+    .card > *:nth-child(1)  { animation-delay: 0.05s; }
+    .card > *:nth-child(2)  { animation-delay: 0.10s; }
+    .card > *:nth-child(3)  { animation-delay: 0.14s; }
+    .card > *:nth-child(4)  { animation-delay: 0.17s; }
+    .card > *:nth-child(5)  { animation-delay: 0.20s; }
+    .card > *:nth-child(6)  { animation-delay: 0.23s; }
+    .card > *:nth-child(7)  { animation-delay: 0.26s; }
+    .card > *:nth-child(8)  { animation-delay: 0.29s; }
+    .card > *:nth-child(9)  { animation-delay: 0.32s; }
+    .card > *:nth-child(10) { animation-delay: 0.35s; }
+    .card > *:nth-child(11) { animation-delay: 0.38s; }
+  </style>
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+<div id="toast-container"></div>
+<div class="card" id="card"></div>
+<div class="footer" id="footer-el"></div>
+
+<script>
+var CONFIG = {
+  name:       "D4RKDEVELOPER",
+  username:   "@d4rkdeveloper",
+  bio:        "Lua Development: 7 Years",
+  avatarUrl:  "https://media.discordapp.net/attachments/1455777809288007884/1496891638893510826/roleplaym.png?ex=69eb8879&is=69ea36f9&hm=d0f5710b0c479c930158111454530dd084b0c240e15cac74a68be8cafd59c5be&=&format=webp&quality=lossless",
+  avatarInit: "D",
+  links: [
+    { icon: "\uD83C\uDFB2", title: "Roblox",    sub: "Unknownblocky",     url: "https://www.roblox.com/users/854219694/profile" },
+    { icon: "\uD83D\uDCAC", title: "Discord",   sub: "RoleplayM Server",  url: "https://discord.gg/9f6g8RXXDc" },
+    { icon: "\uD83D\uDCF8", title: "Instagram", sub: "@520ryy",           url: "https://www.instagram.com/520ryy/" }
+  ],
+  payments: [
+    { icon: "\u2699", title: "Small Server",     sub: "Includes 1x addon scripts and weapons.", invoiceUrl: "https://www.paypal.com/invoice/s/details/INV2-EWT6-6GP3-S37A-B7ZB" },
+    { icon: "\u2699", title: "Medium Server",    sub: "Includes 2x addon scripts and weapons.", invoiceUrl: "https://www.paypal.com/invoice/s/details/INV2-EWT6-6GP3-S37A-B7ZB" },
+    { icon: "\u2699", title: "Large Server",     sub: "Includes 3x addon scripts and weapons.", invoiceUrl: "https://www.paypal.com/invoice/s/details/INV2-EWT6-6GP3-S37A-B7ZB" },
+    { icon: "\u2699", title: "All Items Server", sub: "Includes all addon weapons and scripts.", invoiceUrl: "https://www.paypal.com/invoice/s/details/INV2-EWT6-6GP3-S37A-B7ZB" }
+  ],
+  footer: "\u00a9 2026 OTM STUDIOS  \u00b7  All rights reserved"
+};
+
+(function build() {
+  document.title = CONFIG.name;
+  document.getElementById("footer-el").textContent = CONFIG.footer;
+
+  var card = document.getElementById("card");
+
+  var avatarHTML = CONFIG.avatarUrl
+    ? '<img src="' + CONFIG.avatarUrl + '" alt="' + CONFIG.name + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
+      '<div class="avatar-init" style="display:none">' + CONFIG.avatarInit + '</div>'
+    : '<div class="avatar-init">' + CONFIG.avatarInit + '</div>';
+
+  card.appendChild(makeEl("div", "profile",
+    '<div class="avatar-ring">' + avatarHTML + '</div>' +
+    '<div class="profile-name">' + CONFIG.name + '</div>' +
+    '<div class="profile-tag" id="copy-tag" title="Click to copy">' +
+      CONFIG.username + '<span class="copy-icon">&#x2398;</span>' +
+    '</div>' +
+    '<div class="divider"></div>' +
+    '<div class="profile-bio"><span id="bio-text"></span><span class="typing-cursor" id="bio-cursor"></span></div>' +
+    '<div class="visitor-badge"><span class="visitor-dot"></span><span id="visitor-count">Loading&#8230;</span></div>'
+  ));
+
+  if (CONFIG.links && CONFIG.links.length) {
+    card.appendChild(makeEl("div", "section-label", "Links"));
+    CONFIG.links.forEach(function(link) {
+      var a = makeEl("a", "link-btn",
+        '<div class="btn-icon">' + link.icon + '</div>' +
+        '<div class="btn-text">' +
+          '<span class="btn-title">' + link.title + '</span>' +
+          '<span class="btn-sub">'   + link.sub   + '</span>' +
+        '</div>' +
+        '<span class="btn-arrow">\u2192</span>'
+      );
+      a.href   = link.url;
+      a.target = "_blank";
+      a.rel    = "noopener noreferrer";
+      card.appendChild(a);
+    });
+  }
+
+  if (CONFIG.payments && CONFIG.payments.length) {
+    card.appendChild(makeEl("div", "section-label", "Payments"));
+    CONFIG.payments.forEach(function(pay) {
+      var btn = makeEl("button", "pay-btn",
+        '<div class="btn-icon">' + pay.icon + '</div>' +
+        '<div class="btn-text">' +
+          '<span class="btn-title">' + pay.title + '</span>' +
+          '<span class="btn-sub">'   + pay.sub   + '</span>' +
+          '<span class="pay-badge">PayPal</span>' +
+        '</div>' +
+        '<span class="btn-arrow">\u2192</span>'
+      );
+      (function(p) {
+        btn.addEventListener("click", function() {
+          showToast("Opening PayPal for " + p.title + "...");
+          window.open(p.invoiceUrl, "_blank", "noopener,noreferrer");
+        });
+      })(pay);
+      card.appendChild(btn);
+    });
+  }
+
+  initParticles();
+  initTypingBio();
+  initVisitorCounter();
+  initCopyTag();
+})();
+
+function makeEl(tag, cls, html) {
+  var e = document.createElement(tag);
+  e.className = cls;
+  e.innerHTML = html;
+  return e;
+}
+
+function initParticles() {
+  var canvas = document.getElementById("particle-canvas");
+  var ctx    = canvas.getContext("2d");
+  var W, H, particles = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  for (var i = 0; i < 55; i++) {
+    particles.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      r: Math.random() * 1.5 + 0.4,
+      dx: (Math.random() - 0.5) * 0.3,
+      dy: (Math.random() - 0.5) * 0.3,
+      alpha: Math.random() * 0.5 + 0.1
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(function(p) {
+      p.x += p.dx; p.y += p.dy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(212,168,67," + p.alpha + ")";
+      ctx.fill();
+    });
+    for (var i = 0; i < particles.length; i++) {
+      for (var j = i + 1; j < particles.length; j++) {
+        var dx = particles[i].x - particles[j].x;
+        var dy = particles[i].y - particles[j].y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 110) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = "rgba(212,168,67," + (0.06 * (1 - dist / 110)) + ")";
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function initCopyTag() {
+  document.getElementById("copy-tag").addEventListener("click", function() {
+    var text = CONFIG.username;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function() {
+        showToast("\u2713 Copied " + text + " to clipboard");
+      });
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      showToast("\u2713 Copied " + text + " to clipboard");
+    }
+  });
+}
+
+function initTypingBio() {
+  var el     = document.getElementById("bio-text");
+  var cursor = document.getElementById("bio-cursor");
+  var text   = CONFIG.bio;
+  var i      = 0;
+  function type() {
+    if (i <= text.length) {
+      el.textContent = text.slice(0, i);
+      i++;
+      setTimeout(type, 55);
+    } else {
+      setTimeout(function() { cursor.style.display = "none"; }, 1800);
+    }
+  }
+  setTimeout(type, 600);
+}
+
+function initVisitorCounter() {
+  var el  = document.getElementById("visitor-count");
+  var key = "d4rk_visitors";
+  var stored = localStorage.getItem(key);
+  var count;
+  if (stored) {
+    count = parseInt(stored, 10);
+    var visited = sessionStorage.getItem(key + "_session");
+    if (!visited) {
+      count++;
+      sessionStorage.setItem(key + "_session", "1");
+      localStorage.setItem(key, count);
+    }
+  } else {
+    count = Math.floor(Math.random() * 900) + 500;
+    localStorage.setItem(key, count);
+    sessionStorage.setItem(key + "_session", "1");
+  }
+  el.textContent = count.toLocaleString() + " profile views";
+}
+
+function showToast(message) {
+  var container = document.getElementById("toast-container");
+  var toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) toast.parentNode.removeChild(toast);
+  }, 2800);
+}
+</script>
+</body>
+</html>
